@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sus</title>
+    <style>
+        body {
+            background-color: #111;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .dt {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            background-color: pink;
+            margin: 20px 0;
+        }
+        .pl {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 200, 200, 0.75);
+            transform: translate(-50%, -50%) scale(1);
+            animation: pulse-animation 1s infinite;
+            z-index: -1;
+        }
+        .ad, .sb {
+            width: 80px;
+            height: 30px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #FF6961;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ad.gr, .sb.gr {
+            background-color: #77DD77;
+        }
+        #bi {
+            width: 60px;
+            text-align: center;
+            font-size: 24px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid white;
+            color: white;
+        }
+        @keyframes pulse-animation {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0.5;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0;
+            }
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .bc {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .vl-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .vl-label {
+            margin-bottom: 10px;
+        }
+        .vl-slider {
+            width: 400px;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: white;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .vl-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            cursor: pointer;
+        }
+        .vl-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button id="kr" class="ad gr">Mute</button>
+    <input type="text" id="bi" value="200">
+    <div class="dt" id="md">
+    <div class="pl" id="pl"></div>
+    </div>
+    <label for="af" class="ad rd" id="ad">Upload</label>
+    <input type="file" id="af" accept="audio/*">
+    <div class="bc">
+    <button id="s1" class="sb">1/16</button>
+    <button id="s2" class="sb">1/8</button>
+    <button id="s3" class="sb">1/4</button>
+    </div>
+    <div class="vl-container">
+    <div class="vl-label">fanum tax <span id="vlValue">100%</span></div>
+    <input type="range" id="vl" class="vl-slider" min="0" max="100" value="100">
+    </div>
+    <script>
+
+        const md = document.getElementById('md');
+        const pl = document.getElementById('pl');
+        const bi = document.getElementById('bi');
+        const af = document.getElementById('af');
+        const ad = document.getElementById('ad');
+        const kr = document.getElementById('kr');
+        const s1 = document.getElementById('s1');
+        const s2 = document.getElementById('s2');
+        const s3 = document.getElementById('s3');
+        const vl = document.getElementById('vl');
+        const vlValue = document.getElementById('vlValue');
+
+        let mt = false;
+        let bp = 200;
+        let id;
+        let au = new Audio();
+
+        kr.addEventListener('click', () => {
+            if (mt) {
+                au.volume = vl.value / 100;
+                kr.classList.replace('rd', 'gr');
+                kr.textContent = 'Mute';
+            } else {
+                au.volume = 0;
+                kr.classList.replace('gr', 'rd');
+                kr.textContent = 'Unmute';
+            }
+            mt = !mt;
+        });
+
+        const debounce = (func, delay) => {
+            let inDebounce;
+            return function() {
+                clearTimeout(inDebounce);
+                inDebounce = setTimeout(() => func.apply(this, arguments), delay);
+            }
+        };
+
+        function up() {
+            bp = parseInt(bi.value);
+            if (isNaN(bp) || bp < 0) {
+                bp = 0;
+                bi.value = 0;
+            } else if (bp > 400) {
+                bp = 400;
+                bi.value = 400;
+            }
+            clearInterval(id);
+            if (bp > 0) {
+                id = setInterval(pb, 60000 / bp);
+            }
+        }
+
+        function pb() {
+            if (au.src) {
+                au.currentTime = 0;
+                au.play();
+            }
+            pl.style.animation = 'none';
+            setTimeout(() => {
+                pl.style.animation = '';
+            }, 10);
+        }
+
+        bi.addEventListener('input', debounce(up, 300));
+        af.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    au.src = e.target.result;
+                    ad.classList.replace('rd', 'gr');
+                    ad.textContent = 'Uploaded';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function ss(fc) {
+            clearInterval(id);
+            id = setInterval(pb, (60000 / bp) / fc);
+        }
+
+        s1.addEventListener('click', () => ss(4));
+        s2.addEventListener('click', () => ss(2));
+        s3.addEventListener('click', up);
+        vl.addEventListener('input', () => {
+        vlValue.textContent = `${vl.value}%`;
+        au.volume = vl.value / 100;
+        });
+
+        up();
+    </script>
+</body>
+</html>
